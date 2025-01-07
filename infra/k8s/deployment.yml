@@ -17,6 +17,7 @@ spec:
       containers:
         - name: quiz-app
           image: ghcr.io/notsosmartdev/quiz-app:main
+          imagePullPolicy: Always
           env:
             - name: BOT_TOKEN
               valueFrom:

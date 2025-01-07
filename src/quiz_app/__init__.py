@@ -1,5 +1,6 @@
 import logging
 import os
+from datetime import datetime, timedelta
 
 import bs4
 import httpx
@@ -9,6 +10,7 @@ from telegram.ext import (
     ContextTypes,
     PrefixHandler,
 )
+from telegram.ext.filters import GAME
 
 logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level=logging.INFO
@@ -43,7 +45,15 @@ logging.basicConfig(
 cl = httpx.AsyncClient(timeout=60)
 
 
+GAMES = None
+GAMES_SET_AT = None
+
+
 async def get_games():
+    global GAMES, GAMES_SET_AT
+    if GAMES_SET_AT and GAMES_SET_AT > datetime.utcnow() - timedelta(hours=8):
+        return GAMES
+
     resp = await cl.get("https://minsk.quizplease.ru/schedule")
     html_doc = resp.text
 
@@ -72,7 +82,9 @@ async def get_games():
 
         games.append(f"Когда: {date}\nЧто: {name}\nОписание: {desc}\nГде: {where}")
 
-    return games
+    GAMES = games
+    GAMES_SET_AT = datetime.utcnow()
+    return GAMES
 
 
 async def hello(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
